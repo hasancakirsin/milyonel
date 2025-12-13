@@ -1,0 +1,147 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  role         String   @default("USER")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  campaignParticipations CampaignParticipation[]
+  orders                 Order[]
+  addresses              Address[]
+
+  @@map("users")
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  brand       String
+  category    String
+  description String
+  normalPrice String
+  imageUrl    String
+  specs       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  campaigns Campaign[]
+
+  @@map("products")
+}
+
+model Campaign {
+  id                String   @id @default(cuid())
+  productId         String
+  product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  normalPrice       String
+  groupPrice        String
+  currency          String   @default("TL")
+
+  minParticipants   Int
+  maxParticipants   Int?
+
+  startAt           DateTime
+  endAt             DateTime
+  paymentDeadlineAt DateTime?
+
+  status            String   @default("DRAFT")
+
+  sellerName        String
+  location          String?
+  shippingRules     String
+  description       String?
+
+  isFeatured        Boolean  @default(false)
+  slug              String   @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participations CampaignParticipation[]
+  orders         Order[]
+
+  @@map("campaigns")
+}
+
+model CampaignParticipation {
+  id         String   @id @default(cuid())
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([campaignId, userId])
+  @@map("campaign_participations")
+}
+
+model Order {
+  id                String   @id @default(cuid())
+  campaignId        String
+  campaign          Campaign @relation(fields: [campaignId], references: [id])
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+
+  quantity          Int      @default(1)
+  unitPrice         String
+  totalAmount       String
+  paymentStatus     String   @default("PENDING")
+  paymentDate       DateTime?
+
+  shippingAddressId String?
+  shippingAddress   Address? @relation(fields: [shippingAddressId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("orders")
+}
+
+model Address {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title       String
+  fullAddress String
+  city        String
+  district    String
+  phone       String
+  isDefault   Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders Order[]
+
+  @@map("addresses")
+}
+
+model EmailSubscription {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  source    String?  @default("home_page")
+  isActive  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+
+  @@map("email_subscriptions")
+}
