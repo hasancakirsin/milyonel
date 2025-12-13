@@ -59,8 +59,8 @@ export async function POST(request: NextRequest) {
       data: {
         productId: validatedData.productId,
         slug,
-        normalPrice: validatedData.normalPrice,
-        groupPrice: validatedData.groupPrice,
+        normalPrice: validatedData.normalPrice.toString(),
+        groupPrice: validatedData.groupPrice.toString(),
         currency: validatedData.currency,
         minParticipants: validatedData.minParticipants,
         maxParticipants: validatedData.maxParticipants,
