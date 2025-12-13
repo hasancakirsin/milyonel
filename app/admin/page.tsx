@@ -9,7 +9,7 @@ async function getAdminStats() {
     activeCampaigns,
     totalParticipations,
     totalOrders,
-    totalRevenue,
+    paidOrders,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.campaign.count(),
@@ -22,15 +22,18 @@ async function getAdminStats() {
     }),
     prisma.campaignParticipation.count(),
     prisma.order.count(),
-    prisma.order.aggregate({
+    prisma.order.findMany({
       where: {
         paymentStatus: 'PAID',
       },
-      _sum: {
+      select: {
         totalAmount: true,
       },
     }),
   ]);
+
+  // Calculate total revenue manually since totalAmount is a String
+  const totalRevenue = paidOrders.reduce((sum, order) => sum + Number(order.totalAmount), 0);
 
   const recentCampaigns = await prisma.campaign.findMany({
     take: 5,
@@ -52,7 +55,7 @@ async function getAdminStats() {
     activeCampaigns,
     totalParticipations,
     totalOrders,
-    totalRevenue: totalRevenue._sum.totalAmount || 0,
+    totalRevenue,
     recentCampaigns,
   };
 }
