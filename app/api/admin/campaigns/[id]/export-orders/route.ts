@@ -78,7 +78,7 @@ export async function GET(
     const csvContent = [
       headers.join(','),
       ...rows.map((row) =>
-        row.map((cell) => `"${cell.toString().replace(/"/g, '""')}"`).join(',')
+        row.map((cell) => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(',')
       ),
     ].join('\n');
 
