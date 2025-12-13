@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
         normalPrice: validatedData.normalPrice.toString(),
         description: validatedData.description,
         imageUrl: validatedData.imageUrl,
-        specs: validatedData.specs,
+        specs: validatedData.specs ? JSON.stringify(validatedData.specs) : null,
       },
     });
 
