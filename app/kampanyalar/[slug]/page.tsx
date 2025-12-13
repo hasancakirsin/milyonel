@@ -54,9 +54,10 @@ async function getUserOrder(campaignId: string, userId?: string) {
 export default async function CampaignDetailPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const campaign = await getCampaign(params.slug);
+  const { slug } = await params;
+  const campaign = await getCampaign(slug);
 
   if (!campaign) {
     notFound();

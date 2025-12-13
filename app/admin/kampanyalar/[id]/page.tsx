@@ -46,10 +46,11 @@ async function getCampaignDetails(id: string) {
 export default async function AdminCampaignDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   await requireAdmin();
-  const campaign = await getCampaignDetails(params.id);
+  const { id } = await params;
+  const campaign = await getCampaignDetails(id);
 
   if (!campaign) {
     notFound();
