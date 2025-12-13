@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
         name: validatedData.name,
         brand: validatedData.brand,
         category: validatedData.category,
-        normalPrice: validatedData.normalPrice,
+        normalPrice: validatedData.normalPrice.toString(),
         description: validatedData.description,
         imageUrl: validatedData.imageUrl,
         specs: validatedData.specs,
