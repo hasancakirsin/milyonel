@@ -9,7 +9,7 @@ const statusSchema = z.object({
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const admin = await checkAdmin();
@@ -18,11 +18,13 @@ export async function PATCH(
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 });
     }
 
+    const { id } = await params;
+
     const body = await request.json();
     const { status } = statusSchema.parse(body);
 
     const campaign = await prisma.campaign.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!campaign) {
@@ -37,7 +39,7 @@ export async function PATCH(
     }
 
     const updatedCampaign = await prisma.campaign.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
     });
 

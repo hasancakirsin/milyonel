@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getSession();
@@ -13,8 +13,10 @@ export async function POST(
       return NextResponse.json({ error: 'Giriş yapmalısınız' }, { status: 401 });
     }
 
+    const { id } = await params;
+
     const campaign = await prisma.campaign.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!campaign) {
@@ -33,7 +35,7 @@ export async function POST(
     const participation = await prisma.campaignParticipation.findUnique({
       where: {
         campaignId_userId: {
-          campaignId: params.id,
+          campaignId: id,
           userId: session.userId,
         },
       },
@@ -49,7 +51,7 @@ export async function POST(
     // Check if user already paid
     const existingOrder = await prisma.order.findFirst({
       where: {
-        campaignId: params.id,
+        campaignId: id,
         userId: session.userId,
       },
     });
@@ -72,7 +74,7 @@ export async function POST(
     // Create order
     const order = await prisma.order.create({
       data: {
-        campaignId: params.id,
+        campaignId: id,
         userId: session.userId,
         quantity: 1,
         unitPrice: campaign.groupPrice,
@@ -89,19 +91,19 @@ export async function POST(
     // Check if we should mark campaign as successful
     const orderCount = await prisma.order.count({
       where: {
-        campaignId: params.id,
+        campaignId: id,
         paymentStatus: 'PAID',
       },
     });
 
     const participationCount = await prisma.campaignParticipation.count({
-      where: { campaignId: params.id },
+      where: { campaignId: id },
     });
 
     // If all participants paid or payment deadline passed
     if (orderCount >= campaign.minParticipants) {
       await prisma.campaign.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           status: 'SUCCESSFUL',
         },

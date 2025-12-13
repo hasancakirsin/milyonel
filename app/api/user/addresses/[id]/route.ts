@@ -14,7 +14,7 @@ const addressSchema = z.object({
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getSession();
@@ -23,12 +23,14 @@ export async function PUT(
       return NextResponse.json({ error: 'Giriş yapmalısınız' }, { status: 401 });
     }
 
+    const { id } = await params;
+
     const body = await request.json();
     const validatedData = addressSchema.parse(body);
 
     // Check if address belongs to user
     const existingAddress = await prisma.address.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existingAddress || existingAddress.userId !== session.userId) {
@@ -41,7 +43,7 @@ export async function PUT(
         where: {
           userId: session.userId,
           isDefault: true,
-          id: { not: params.id },
+          id: { not: id },
         },
         data: {
           isDefault: false,
@@ -50,7 +52,7 @@ export async function PUT(
     }
 
     const address = await prisma.address.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         title: validatedData.title,
         fullAddress: validatedData.fullAddress,
@@ -80,7 +82,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getSession();
@@ -89,9 +91,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'Giriş yapmalısınız' }, { status: 401 });
     }
 
+    const { id } = await params;
+
     // Check if address belongs to user
     const existingAddress = await prisma.address.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existingAddress || existingAddress.userId !== session.userId) {
@@ -99,7 +103,7 @@ export async function DELETE(
     }
 
     await prisma.address.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({

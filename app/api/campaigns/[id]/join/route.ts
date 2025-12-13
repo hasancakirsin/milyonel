@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getSession();
@@ -13,8 +13,10 @@ export async function POST(
       return NextResponse.json({ error: 'Giriş yapmalısınız' }, { status: 401 });
     }
 
+    const { id } = await params;
+
     const campaign = await prisma.campaign.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!campaign) {
@@ -33,7 +35,7 @@ export async function POST(
     const existingParticipation = await prisma.campaignParticipation.findUnique({
       where: {
         campaignId_userId: {
-          campaignId: params.id,
+          campaignId: id,
           userId: session.userId,
         },
       },
@@ -49,20 +51,20 @@ export async function POST(
     // Create participation
     const participation = await prisma.campaignParticipation.create({
       data: {
-        campaignId: params.id,
+        campaignId: id,
         userId: session.userId,
       },
     });
 
     // Check if minimum participants reached
     const participationCount = await prisma.campaignParticipation.count({
-      where: { campaignId: params.id },
+      where: { campaignId: id },
     });
 
     if (participationCount >= campaign.minParticipants) {
       // Update campaign status to COLLECTING_PAYMENTS
       await prisma.campaign.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           status: 'COLLECTING_PAYMENTS',
           paymentDeadlineAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
